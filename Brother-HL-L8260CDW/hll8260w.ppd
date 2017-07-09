@@ -1,0 +1,570 @@
+*PPD-Adobe: "4.3"
+
+*%
+*% This file is published under the GNU General Public License 2.0
+*%
+
+*% General information:
+*% - Adobe PostScript Printer Description File Format Specification, Version 4.3, 1996
+*%   https://www-cdf.fnal.gov/offline/PostScript/5003.PPD_Spec_v4.3.pdf
+*% - Brother Technical Reference Guide Version AA, January, 2017
+*%   http://download.brother.com/welcome/doc002907/Tech_Manual_AA.pdf
+*%   Contains some info on which PJL commands are supported
+*% - HP Printer Job Language Technical Reference Manual, 2003
+*%   http://h10032.www1.hp.com/ctg/Manual/bpl13208.pdf
+*% - CUPS PPD Extensions
+*%   https://www.cups.org/doc/spec-ppd.html
+*%   lists the *cups... keywords
+*% - foomatic-db-engine README
+*%   http://bzr.linuxfoundation.org/loggerhead/openprinting/foomatic/foomatic-db-engine/annotate/head:/README
+*%   Contains an explanation of all *Foomatic... keywords and an example for a corresponding ppd file
+
+*% Testing the ppd file and the filter chain
+*% - cupstestppd HLL8260W.PPD
+*%   Does some syntatic and semantic checking of the ppd file.
+*% - cupsfilter -p HLL8260W.PPD -m printer/foo -o PageSize=A4 -o ColorModel=Gray some.pdf -e > out.pcl
+*%   Loads some.pdf, applys the filter chain as specified in the ppd file
+*%   and writes the output to out.pcl. "some.pdf" need to be a valid path to a printable document.
+*%   In contrast, "printer/foo" is not supposed to be replaced, it
+*%   just tells cupsfilter to dump the raw byte stream as it would be sent to the printer.
+*%   With "-o" one can pass the same options as if one would print the file with "lpr".
+*%   More information can be found at https://wiki.debian.org/ThecupsfilterUtility
+*% - ipptool
+*%   A nice way to test the ipp capabilities of the printer is the cap.ipptool as provided by
+*%   https://lists.cups.org/pipermail/cups/2013-February/025816.html
+
+*% General stuff
+*FormatVersion: "4.3"
+*FileVersion: "1.0"
+*LanguageVersion: English
+*LanguageEncoding: ISOLatin1
+*PCFileName: "HLL8260W.PPD"
+*Product: "(HL-L8260CDW)"
+*Manufacturer: "Brother"
+*ModelName: "Brother HL-L8260CDW"
+*ShortNickName: "HL-L8260CDW"
+*NickName: "Brother HL-L8260CDW Foomatic - PXL"
+*% Since we use gs anyway, is there any value in specifying the
+*% printer-supported version of PostScript?
+*PSVersion: "(3010.106) 3"
+*LanguageLevel: "3"
+*ColorDevice: True
+*DefaultColorSpace: RGB
+*FileSystem: False
+*Throughput: "31"
+*LandscapeOrientation: Plus90
+*TTRasterizer: Type42
+*1284DeviceID: "MFG:Brother;MDL:HL-L8260CDW"
+*FreeVM: "2700000"
+
+*% CUPS specific
+*cupsVersion: 2.2
+*% is this used for anything?
+*cupsModelNumber: 5
+*cupsManualCopies: False
+*% Set the preference for PDF-based printing
+*cupsFilter: "application/vnd.cups-postscript 100 foomatic-rip"
+*cupsFilter: "application/vnd.cups-pdf 0 foomatic-rip"
+*cupsLanguages: "en"
+
+*% Superfluous since Foomatic takes care of this automatically
+*%Protocols: PJL
+*%JCLBegin: "<1B>%-12345X@PJL<0A>"
+*%JCLToPSInterpreter: "@PJL ENTER LANGUAGE=PCLXL<0A>"
+*%JCLEnd: "<1B>%-12345X"
+
+*% The proprietary CUPS filter provided by Brother also uses
+*% PJL as a JCL, but with a different PDL "@PJL ENTER LANGUAGE=XL2HB".
+*% According to http://www.undocprint.org/formats/page_description_languages/xl2hb
+*% XL2HB is a PCL dialect. It's also interesting that the proprietary driver
+*% uses Ghostscript to convert the input to ppmraw before it enters the closed-source
+*% part, such that presumably a rastered image is sent to the printer.
+
+*% Foomatic
+*FoomaticRIPCommandLine: "gs -q -dBATCH -dPARANOIDSAFER -dNOPAUSE%B%A%&&
+Z -sOutputFile=- -"
+*End
+
+*OpenGroup: General/General
+
+*% --------------------------------- PrintoutMode ---------------------------------------
+
+*% TODO: There exists a IPP attribute print-quality, which can be controlled via the ppd keyword
+*% cupsPrintQuality. The HL-L8260CDW only advertizes support for the "normal" quality, but in
+*% principle one should adopt the following code to use this keyword.
+
+*OpenUI *PrintoutMode/Print Quality: PickOne
+*FoomaticRIPOption PrintoutMode: enum Composite A
+*OrderDependency: 10 AnySetup *PrintoutMode
+*DefaultPrintoutMode: Normal
+*PrintoutMode Draft/Draft: "%% FoomaticRIPOptionSetting: PrintoutMode=Draft"
+*FoomaticRIPOptionSetting PrintoutMode=Draft: "PrinterResolution=600x6&&
+00dpi ColorModel=Color Economode=On"
+*End
+*PrintoutMode Draft.Gray/Draft Grayscale: "%% FoomaticRIPOptionSetting: PrintoutMode=Draft.Gray"
+*FoomaticRIPOptionSetting PrintoutMode=Draft.Gray: "PrinterResolution=&&
+600x600dpi ColorModel=Gray Economode=On"
+*End
+*PrintoutMode Normal/Normal: "%% FoomaticRIPOptionSetting: PrintoutMode=Normal"
+*FoomaticRIPOptionSetting PrintoutMode=Normal: "PrinterResolution=600x&&
+600dpi ColorModel=Color Economode=Off"
+*End
+*PrintoutMode Normal.Gray/Normal Grayscale: "%% FoomaticRIPOptionSetting: PrintoutMode=Normal.Gray"
+*FoomaticRIPOptionSetting PrintoutMode=Normal.Gray: "PrinterResolution&&
+=600x600dpi ColorModel=Gray Economode=Off"
+*End
+*%PrintoutMode High/High Quality: "%% FoomaticRIPOptionSetting: PrintoutMode=High"
+*%FoomaticRIPOptionSetting PrintoutMode=High: "PrinterResolution=2400x600dpi ColorModel=Color Economode=Off"
+*%PrintoutMode High.Gray/High Quality Grayscale: "%% FoomaticRIPOptionSetting: PrintoutMode=High.Gray"
+*%FoomaticRIPOptionSetting PrintoutMode=High.Gray: "PrinterResolution=2400x600dpi ColorModel=Gray Economode=Off"
+*CloseUI: *PrintoutMode
+
+*% --------------------------------- PageSize ---------------------------------------
+*% Note that the name of the option "PageSize" and the choices "A4" etc.
+*% are Standard and printing dialogs parse for them. Cf.
+*% https://code.woboq.org/qt5/qtbase/src/plugins/printsupport/cups/qppdprintdevice.cpp.html#_ZNK15QPpdPrintDevice13loadPageSizesEv
+
+*OpenUI *PageSize/Media Size: PickOne
+*FoomaticRIPOption PageSize: enum CmdLine A
+*OrderDependency: 10 AnySetup *PageSize
+*DefaultPageSize: A4
+*PageSize A4/A4: "%% FoomaticRIPOptionSetting: PageSize=A4"
+*FoomaticRIPOptionSetting PageSize=A4: " -dDEVICEWIDTHPOINTS=595 -dDEV&&
+ICEHEIGHTPOINTS=842"
+*End
+*PageSize Letter/Letter: "%% FoomaticRIPOptionSetting: PageSize=Letter"
+*FoomaticRIPOptionSetting PageSize=Letter: " -dDEVICEWIDTHPOINTS=612 -&&
+dDEVICEHEIGHTPOINTS=792"
+*End
+*PageSize Legal/Legal: "%% FoomaticRIPOptionSetting: PageSize=Legal"
+*FoomaticRIPOptionSetting PageSize=Legal: " -dDEVICEWIDTHPOINTS=612 -dDEV&&
+ICEHEIGHTPOINTS=1008"
+*End
+*PageSize Executive/Executive: "%% FoomaticRIPOptionSetting: PageSize=Executive"
+*FoomaticRIPOptionSetting PageSize=Executive: " -dDEVICEWIDTHPOINTS=522 -dDEV&&
+ICEHEIGHTPOINTS=756"
+*End
+*PageSize A5/A5: "%% FoomaticRIPOptionSetting: PageSize=A5"
+*FoomaticRIPOptionSetting PageSize=A5: " -dDEVICEWIDTHPOINTS=420 -dDEV&&
+ICEHEIGHTPOINTS=595"
+*End
+*PageSize A5Rotated/A5 Long Edge: "%% FoomaticRIPOptionSetting: PageSize=A5Rotated"
+*FoomaticRIPOptionSetting PageSize=A5Rotated: " -dDEVICEWIDTHPOINTS=595 -dDEV&&
+ICEHEIGHTPOINTS=420"
+*End
+*PageSize A6/A6: "%% FoomaticRIPOptionSetting: PageSize=A6"
+*FoomaticRIPOptionSetting PageSize=A6: " -dDEVICEWIDTHPOINTS=297 -dDEV&&
+ICEHEIGHTPOINTS=420"
+*End
+*PageSize ISOB5/ISOB5: "%% FoomaticRIPOptionSetting: PageSize=ISOB5"
+*FoomaticRIPOptionSetting PageSize=ISOB5: " -dDEVICEWIDTHPOINTS=499 -dDEV&&
+ICEHEIGHTPOINTS=709"
+*End
+*PageSize B5/B5: "%% FoomaticRIPOptionSetting: PageSize=B5"
+*FoomaticRIPOptionSetting PageSize=B5: " -dDEVICEWIDTHPOINTS=516 -dDEV&&
+ICEHEIGHTPOINTS=729"
+*End
+*PageSize B6/B6: "%% FoomaticRIPOptionSetting: PageSize=B6"
+*FoomaticRIPOptionSetting PageSize=B6: " -dDEVICEWIDTHPOINTS=363 -dDEV&&
+ICEHEIGHTPOINTS=516"
+*End
+*PageSize EnvDL/DL: "%% FoomaticRIPOptionSetting: PageSize=EnvDL"
+*FoomaticRIPOptionSetting PageSize=EnvDL: " -dDEVICEWIDTHPOINTS=312 -dDEV&&
+ICEHEIGHTPOINTS=624"
+*End
+*PageSize EnvC5/C5: "%% FoomaticRIPOptionSetting: PageSize=EnvC5"
+*FoomaticRIPOptionSetting PageSize=EnvC5: " -dDEVICEWIDTHPOINTS=459 -dDEV&&
+ICEHEIGHTPOINTS=649"
+*End
+*PageSize Env10/Com-10: "%% FoomaticRIPOptionSetting: PageSize=Env10"
+*FoomaticRIPOptionSetting PageSize=Env10: " -dDEVICEWIDTHPOINTS=297 -dDEV&&
+ICEHEIGHTPOINTS=684"
+*End
+*PageSize EnvMonarch/Monarch: "%% FoomaticRIPOptionSetting: PageSize=EnvMonarch"
+*FoomaticRIPOptionSetting PageSize=EnvMonarch: " -dDEVICEWIDTHPOINTS=279 -dDEV&&
+ICEHEIGHTPOINTS=540"
+*End
+*PageSize 3x5/3 x 5: "%% FoomaticRIPOptionSetting: PageSize=3x5"
+*FoomaticRIPOptionSetting PageSize=3x5: " -dDEVICEWIDTHPOINTS=216 -dDEV&&
+ICEHEIGHTPOINTS=360"
+*End
+*PageSize FanFoldGermanLegal/Folio: "%% FoomaticRIPOptionSetting: PageSize=FanFoldGermanLegal"
+*FoomaticRIPOptionSetting PageSize=FanFoldGermanLegal: " -dDEVICEWIDTHPOINTS=612 -dDEV&&
+ICEHEIGHTPOINTS=936"
+*End
+*PageSize Postcard/Hagaki: "%% FoomaticRIPOptionSetting: PageSize=Postcard"
+*FoomaticRIPOptionSetting PageSize=Postcard: " -dDEVICEWIDTHPOINTS=284 -dDEV&&
+ICEHEIGHTPOINTS=419"
+*End
+*PageSize EnvYou4/Envelope #4: "%% FoomaticRIPOptionSetting: PageSize=EnvYou4"
+*FoomaticRIPOptionSetting PageSize=EnvYou4: " -dDEVICEWIDTHPOINTS=298 -dDEV&&
+ICEHEIGHTPOINTS=666"
+*End
+*PageSize EnvChou3/Envelope MAX: "%% FoomaticRIPOptionSetting: PageSize=EnvChou3"
+*FoomaticRIPOptionSetting PageSize=EnvChou3: " -dDEVICEWIDTHPOINTS=340 -dDEV&&
+ICEHEIGHTPOINTS=666"
+*End
+*PageSize 210x270mm/270mm Paper: "%% FoomaticRIPOptionSetting: PageSize=210x270mm"
+*FoomaticRIPOptionSetting PageSize=210x270mm: " -dDEVICEWIDTHPOINTS=595 -dDEV&&
+ICEHEIGHTPOINTS=765"
+*End
+*PageSize 195x270mm/16K(195x270mm): "%% FoomaticRIPOptionSetting: PageSize=195x270mm"
+*FoomaticRIPOptionSetting PageSize=195x270mm: " -dDEVICEWIDTHPOINTS=553 -dDEV&&
+ICEHEIGHTPOINTS=765"
+*End
+*PageSize 8,5x13,375/Mexico Legal: "%% FoomaticRIPOptionSetting: PageSize=8,5x13,375"
+*FoomaticRIPOptionSetting PageSize=8,5x13,375: " -dDEVICEWIDTHPOINTS=612 -dDEV&&
+ICEHEIGHTPOINTS=963"
+*End
+*CloseUI: *PageSize
+
+*OpenUI *PageRegion/Media Size: PickOne
+*OrderDependency: 10 AnySetup *PageRegion
+*DefaultPageRegion: A4
+*PageRegion A4/A4: "%% FoomaticRIPOptionSetting: PageSize=A4"
+*PageRegion Letter/Letter: "%% FoomaticRIPOptionSetting: PageSize=Letter"
+*PageRegion Legal/Legal: "%% FoomaticRIPOptionSetting: PageSize=Legal"
+*PageRegion Executive/Executive: "%% FoomaticRIPOptionSetting: PageSize=Executive"
+*PageRegion A5/A5: "%% FoomaticRIPOptionSetting: PageSize=A5"
+*PageRegion A5Rotated/A5 Long Edge: "%% FoomaticRIPOptionSetting: PageSize=A5Rotated"
+*PageRegion A6/A6: "%% FoomaticRIPOptionSetting: PageSize=A6"
+*PageRegion ISOB5/ISOB5: "%% FoomaticRIPOptionSetting: PageSize=ISOB5"
+*PageRegion B5/B5: "%% FoomaticRIPOptionSetting: PageSize=B5"
+*PageRegion B6/B6: "%% FoomaticRIPOptionSetting: PageSize=B6"
+*PageRegion EnvDL/DL: "%% FoomaticRIPOptionSetting: PageSize=EnvDL"
+*PageRegion EnvC5/C5: "%% FoomaticRIPOptionSetting: PageSize=EnvC5"
+*PageRegion Env10/Com-10: "%% FoomaticRIPOptionSetting: PageSize=Env10"
+*PageRegion EnvMonarch/Monarch: "%% FoomaticRIPOptionSetting: PageSize=EnvMonarch"
+*PageRegion 3x5/3 x 5: "%% FoomaticRIPOptionSetting: PageSize=3x5"
+*PageRegion FanFoldGermanLegal/Folio: "%% FoomaticRIPOptionSetting: PageSize=FanFoldGermanLegal"
+*PageRegion Postcard/Hagaki: "%% FoomaticRIPOptionSetting: PageSize=Postcard"
+*PageRegion EnvYou4/Envelope #4: "%% FoomaticRIPOptionSetting: PageSize=EnvYou4"
+*PageRegion EnvChou3/Envelope MAX: "%% FoomaticRIPOptionSetting: PageSize=EnvChou3"
+*PageRegion 210x270mm/270mm Paper: "%% FoomaticRIPOptionSetting: PageSize=210x270mm"
+*PageRegion 195x270mm/16K(195x270mm): "%% FoomaticRIPOptionSetting: PageSize=195x270mm"
+*PageRegion 8,5x13,375/Mexico Legal: "%% FoomaticRIPOptionSetting: PageSize=8,5x13,375"
+*CloseUI: *PageRegion
+
+*DefaultImageableArea: A4
+*ImageableArea A4/A4: "12 12 583 830"
+*ImageableArea Letter/Letter: "12 12 600 780"
+*ImageableArea Legal/Legal: "12 12 600 996"
+*ImageableArea Executive/Executive: "12 12 510 744"
+*ImageableArea A5/A5: "12 12 408 583"
+*ImageableArea A5Rotated/A5 Long Edge: "12 12 583 408"
+*ImageableArea A6/A6: "12 12 285 408"
+*ImageableArea ISOB5/ISOB5: "12 12 487 697"
+*ImageableArea B5/B5: "12 12 504 717"
+*ImageableArea B6/B6: "12 12 351 504"
+*ImageableArea EnvDL/DL: "12 12 300 612"
+*ImageableArea EnvC5/C5: "12 12 447 637"
+*ImageableArea Env10/Com-10: "12 12 285 672"
+*ImageableArea EnvMonarch/Monarch: "12 12 267 528"
+*ImageableArea 3x5/3 x 5: "12 12 204 348"
+*ImageableArea FanFoldGermanLegal/Folio: "12 12 600 924"
+*ImageableArea Postcard/Hagaki: "12 12 272 407"
+*ImageableArea EnvYou4/Envelope #4: "12 12 286 654"
+*ImageableArea EnvChou3/Envelope MAX: "12 12 328 654"
+*ImageableArea 210x270mm/270mm Paper: "12 12 583 753"
+*ImageableArea 195x270mm/16K(195x270mm): "12 12 541 753"
+*ImageableArea 8,5x13,375/Mexico Legal: "12 12 600 951"
+
+*DefaultPaperDimension: A4
+*PaperDimension A4/A4: "595 842"
+*PaperDimension Letter/Letter: "612 792"
+*PaperDimension Legal/Legal: "612 1008"
+*PaperDimension Executive/Executive: "522 756"
+*PaperDimension A5/A5: "420 595"
+*PaperDimension A5Rotated/A5 Long Edge: "595 420"
+*PaperDimension A6/A6: "297 420"
+*PaperDimension ISOB5/ISOB5: "499 709"
+*PaperDimension B5/B5: "516 729"
+*PaperDimension B6/B6: "363 516"
+*PaperDimension EnvDL/DL: "312 624"
+*PaperDimension EnvC5/C5: "459 649"
+*PaperDimension Env10/Com-10: "297 684"
+*PaperDimension EnvMonarch/Monarch: "279 540"
+*PaperDimension 3x5/3 x 5: "216 360"
+*PaperDimension FanFoldGermanLegal/Folio: "612 936"
+*PaperDimension Postcard/Hagaki: "284 419"
+*PaperDimension EnvYou4/Envelope #4: "298 666"
+*PaperDimension EnvChou3/Envelope MAX: "340 666"
+*PaperDimension 210x270mm/270mm Paper: "595 765"
+*PaperDimension 195x270mm/16K(195x270mm): "553 765"
+*PaperDimension 8,5x13,375/Mexico Legal: "612 963"
+
+*% --------------------------------- InputSlot ---------------------------------------
+*% Note that the name of the option "InputSlot" and the choice "Auto" are quasi standard
+*% and printing dialogs parse for them. Cf.
+*%https://code.woboq.org/qt5/qtbase/src/printsupport/kernel/qprint_p.h.html#_ZN11QPrintUtils20ppdChoiceToInputSlotERK12ppd_choice_s
+*% https://code.woboq.org/qt5/qtbase/src/plugins/printsupport/cups/qppdprintdevice.cpp.html#_ZNK15QPpdPrintDevice14loadInputSlotsEv
+*% https://github.com/GNOME/gtk/blob/4724a89022ef1bec93b1a42d4cf2fec7191ed712/modules/printbackends/cups/gtkprintbackendcups.c#L4320
+
+*% We do not follow the advice of
+*% https://code.woboq.org/qt5/qtbase/src/printsupport/kernel/qprint_p.h.html#161
+*% to use the Windows names.
+
+*JCLOpenUI *InputSlot/Paper Source: PickOne
+*OrderDependency: 13 JCLSetup *InputSlot
+*DefaultInputSlot: Auto
+*InputSlot Auto/Auto: "@PJL SET SOURCETRAY=AUTO<0A>"
+*InputSlot Tray1/Tray1: "@PJL SET SOURCETRAY=TRAY1<0A>"
+*InputSlot Tray2/Tray2: "@PJL SET SOURCETRAY=TRAY2<0A>"
+*InputSlot MPTray/MP Tray: "@PJL SET SOURCETRAY=MPTRAY<0A>"
+*JCLCloseUI: *InputSlot
+
+*% --------------------------------- ColorModel ---------------------------------------
+*% Note that the name of the option "ColorModel" and the value "Gray"
+*% are quasi standard and printing dialogs parse for them. Cf.
+*% https://code.woboq.org/qt5/qtbase/src/plugins/printsupport/cups/qppdprintdevice.cpp.html#_ZNK15QPpdPrintDevice16defaultColorModeEv
+*% https://github.com/GNOME/gtk/blob/4724a89022ef1bec93b1a42d4cf2fec7191ed712/modules/printbackends/cups/gtkprintbackendcups.c#L4484
+
+*% There is no need to add a JCL option with "@PJL SET RENDERMODE=COLOR<0A>"
+*% or "@PJL SET RENDERMODE=GRAYSCALE<0A>" here, since Foomatic takes care
+*% of this automatically.
+
+*OpenUI *ColorModel/Color Mode: PickOne
+*FoomaticRIPOption ColorModel: enum CmdLine B
+*OrderDependency: 100 AnySetup *ColorModel
+*%DefaultColorModel: Color
+*DefaultColorModel: FromPrintoutMode
+*ColorModel FromPrintoutMode/Controlled by 'Printout Mode': "%% FoomaticRIPOptionSetting: ColorModel=@PrintoutMode"
+*ColorModel Color/Color: "%% FoomaticRIPOptionSetting: ColorModel=Color"
+*FoomaticRIPOptionSetting ColorModel=Color: " -sDEVICE=pxlcolor"
+*ColorModel Gray/Grayscale: "%% FoomaticRIPOptionSetting: ColorModel=Gray"
+*FoomaticRIPOptionSetting ColorModel=Gray: " -sDEVICE=pxlmono"
+*CloseUI: *ColorModel
+
+*% --------------------------------- Resolution ---------------------------------------
+*% Note that the name of the option "Resolution" is standard and printing dialogs
+*% parse for it. Cf.
+*% https://code.woboq.org/qt5/qtbase/src/printsupport/kernel/qprint_p.h.html#_ZN11QPrintUtils18parsePpdResolutionERK10QByteArray
+*% https://code.woboq.org/qt5/qtbase/src/plugins/printsupport/cups/qppdprintdevice.cpp.html#_ZNK15QPpdPrintDevice15loadResolutionsEv
+
+*% The Foomatic-db-engine README's ppd-example sets the DefaultResolution to the maximal resolution
+*% and avoids every other standard "Resolution" option. The latter is presumably
+*% done to ensure that applications do not cripple the result.
+*DefaultResolution: 600dpi
+
+*% This code also follows the Foomatic README in specifying the resolution
+*% twice. Once as an argument to ghostscript and once within the PJL prolog.
+
+*FoomaticRIPOption GSResolution: enum CmdLine A 100
+*FoomaticRIPOptionSetting GSResolution=FromPrinterResolution: ""
+*FoomaticRIPOptionSetting GSResolution=300x300dpi: " -r300x300"
+*FoomaticRIPOptionSetting GSResolution=600x600dpi: " -r600x600"
+*%FoomaticRIPOptionSetting GSResolution=2400x600dpi: " -r2400x600"
+
+*FoomaticRIPOption JCLResolution: enum JCL A 100
+*FoomaticRIPOptionSetting JCLResolution=FromPrinterResolution: ""
+*FoomaticRIPOptionSetting JCLResolution=300x300dpi: "SET RESOLUTION=300"
+*FoomaticRIPOptionSetting JCLResolution=600x600dpi: "SET RESOLUTION=600"
+*% TODO: Does this really work???
+*%FoomaticRIPOptionSetting JCLResolution=2400x600dpi: "SET RESOLUTION=2400x600"
+
+*% The option style "600x600dpi" seems to be standard, determined by
+*% the IPP attribute "printer-resolution".
+
+*OpenUI *PrinterResolution/Resolution: PickOne
+*FoomaticRIPOption PrinterResolution: enum Composite A
+*OrderDependency: 20 AnySetup *PrinterResolution
+*%DefaultPrinterResolution: 600x600dpi
+*DefaultPrinterResolution: FromPrintoutMode
+*PrinterResolution FromPrintoutMode/Controlled by 'Printout Mode': "%% FoomaticRIPOptionSetting: PrinterResolution=@PrintoutMode"
+*PrinterResolution 300x300dpi/300 DPI: "%% FoomaticRIPOptionSetting: PrinterResolution=300x300dpi"
+*FoomaticRIPOptionSetting PrinterResolution=300x300dpi: "JCLResolution&&
+=300x300dpi GSResolution=300x300dpi"
+*End
+*PrinterResolution 600x600dpi/600 DPI: "%% FoomaticRIPOptionSetting: PrinterResolution=600x600dpi"
+*FoomaticRIPOptionSetting PrinterResolution=600x600dpi: "JCLResolution&&
+=600x600dpi GSResolution=600x600dpi"
+*End
+*%PrinterResolution 2400x600dpi/2400 DPI: "%% FoomaticRIPOptionSetting: PrinterResolution=2400x600dpi"
+*%FoomaticRIPOptionSetting PrinterResolution=2400x600dpi: "JCLResolution=2400x600dpi GSResolution=2400x600dpi"
+*CloseUI: *PrinterResolution
+
+*% --------------------------------- Duplex ---------------------------------------
+*% Note that the name of the option "Dublex" and the choices "None"
+*% "DuplexNoTumble" and "DuplexTumble" are standard and printing dialogs
+*% parse for them. Cf.
+*% https://code.woboq.org/qt5/qtbase/src/printsupport/kernel/qprint_p.h.html#_ZN11QPrintUtils21ppdChoiceToDuplexModeERK10QByteArray
+*% https://code.woboq.org/qt5/qtbase/src/plugins/printsupport/cups/qppdprintdevice.cpp.html#_ZNK15QPpdPrintDevice15loadDuplexModesEv
+*% https://github.com/GNOME/gtk/blob/4724a89022ef1bec93b1a42d4cf2fec7191ed712/modules/printbackends/cups/gtkprintbackendcups.c#L4318
+
+*OpenUI *Duplex/Double-Sided Printing: PickOne
+*FoomaticRIPOption Duplex: enum CmdLine A
+*OrderDependency: 20 AnySetup *Duplex
+*DefaultDuplex: None
+*Duplex None/Off: "%% FoomaticRIPOptionSetting: Duplex=None"
+*FoomaticRIPOptionSetting Duplex=None: ""
+*Duplex DuplexNoTumble/Long Edge (Standard): "%% FoomaticRIPOptionSetting: Duplex=DuplexNoTumble"
+*FoomaticRIPOptionSetting Duplex=DuplexNoTumble: " -dDuplex"
+*Duplex DuplexTumble/Short Edge (Flip): "%% FoomaticRIPOptionSetting: Duplex=DuplexTumble"
+*FoomaticRIPOptionSetting Duplex=DuplexTumble: " -dDuplex -dTumble"
+*CloseUI: *Duplex
+
+*% --------------------------------- MediaType ---------------------------------------
+*% Note that the name of the option "MediaType" is standard and printing dialogs
+*% parse for it. Cf.
+*% https://github.com/GNOME/gtk/blob/4724a89022ef1bec93b1a42d4cf2fec7191ed712/modules/printbackends/cups/gtkprintbackendcups.c#L4319
+
+*JCLOpenUI *MediaType/Media Type: PickOne
+*OrderDependency: 17 JCLSetup *MediaType
+*DefaultMediaType: Plain
+*MediaType Plain/Plain Paper: "@PJL SET MEDIATYPE=REGULAR<0A>"
+*MediaType Thin/Thin Paper: "@PJL SET MEDIATYPE=THIN<0A>"
+*MediaType Thick/Thick Paper: "@PJL SET MEDIATYPE=THICK<0A>"
+*MediaType Thicker/Thicker Paper: "@PJL SET MEDIATYPE=THICK2<0A>"
+*MediaType BOND/Bond Paper: "@PJL SET MEDIATYPE=BOND<0A>"
+*MediaType Env/Envelopes: "@PJL SET MEDIATYPE=ENVELOPES<0A>"
+*MediaType EnvThick/Env. Thick: "@PJL SET MEDIATYPE=ENVTHICK<0A>"
+*MediaType EnvThin/Env. Thin: "@PJL SET MEDIATYPE=ENVTHIN<0A>"
+*MediaType Recycled/Recycled Paper: "@PJL SET MEDIATYPE=RECYCLED<0A>"
+*MediaType Label/Label: "@PJL SET MEDIATYPE=LABEL<0A>"
+*MediaType Glossy/Glossy Paper: "@PJL SET MEDIATYPE=GLOSSY<0A>"
+*MediaType PostCard/Postcard: "@PJL SET MEDIATYPE=POSTCARD<0A>"
+*%MediaType Letterhead/Letterhead: "@PJL SET MEDIATYPE=REGULAR<0A>"
+*MediaType ColoredPaper/Coloured Paper: "@PJL SET MEDIATYPE=REGULAR<0A>"
+*JCLCloseUI: *MediaType
+
+*% Constraints, accoarding to http://support.brother.com/g/b/spec.aspx?c=eu_ot&lang=en&prod=hll8260cdw_us_eu_as
+*% Duplex only goes with A4 paper and specific MediaTypes.
+*% TODO: add UIConstraints or cupsUIConstraints
+
+*CloseGroup: General
+
+*OpenGroup: Adjustment/Adjustment
+
+*JCLOpenUI *JCLGray/Improve Gray Color: PickOne
+*OrderDependency: 19 JCLSetup *JCLGray
+*DefaultJCLGray: ON
+*JCLGray OFF/Off: "@PJL SET IMPROVEGRAY=OFF<0A>"
+*JCLGray ON/On: "@PJL SET IMPROVEGRAY=ON<0A>"
+*JCLCloseUI: *JCLGray
+
+*% What is this good for?
+*% The blob driver uses "@PJL SET APTMODE=ON4" ????
+*%JCLOpenUI *JCLAPT/APT: PickOne
+*%OrderDependency: 19 JCLSetup *JCLAPT
+*%DefaultJCLAPT: OFF
+*%JCLAPT OFF/Off: "@PJL SET APT=OFF<0A>"
+*%JCLAPT ON/On: "@PJL SET APT=ON<0A>"
+*%JCLCloseUI: *JCLAPT
+
+*% What is this good for?
+*% Does not seem to be in use by the binary blob!
+*%JCLOpenUI *JCLImageAdapt/ImageAdapt: PickOne
+*%OrderDependency: 19 JCLSetup *JCLImageAdapt
+*%DefaultJCLImageAdapt: OFF
+*%JCLImageAdapt OFF/Off: "@PJL SET IMAGEADAPT=OFF<0A>"
+*%JCLImageAdapt ON/On: "@PJL SET IMAGEADAPT=ON<0A>"
+*%JCLImageAdapt AUTO/Auto: "@PJL SET IMAGEADAPT=AUTO<0A>"
+*%JCLCloseUI: *JCLImageAdapt
+
+*% Not officially documented, but the blob driver at least has the capability to emit it
+*%JCLOpenUI *JCLRET/RET: PickOne
+*%OrderDependency: 19 JCLSetup *JCLRET
+*%DefaultJCLRET: OFF
+*%JCLRET OFF/Off: "@PJL SET RET=OFF<0A>"
+*%JCLRET LIGHT/Light: "@PJL SET RET=LIGHT<0A>"
+*%JCLRET MEDIUM/Medium: "@PJL SET RET=MEDIUM<0A>"
+*%JCLRET DARK/Dark: "@PJL SET RET=DARK<0A>"
+*%JCLCloseUI: *JCLRET
+
+*JCLOpenUI *JCLUCRGCRForImage/Enhance Black Printing: PickOne
+*OrderDependency: 20 JCLSetup *JCLUCRGCRForImage
+*DefaultJCLUCRGCRForImage: OFF
+*JCLUCRGCRForImage OFF/Off: "@PJL SET UCRGCRFORIMAGE=OFF<0A>"
+*JCLUCRGCRForImage ON/On: "@PJL SET UCRGCRFORIMAGE=ON<0A>"
+*JCLCloseUI: *JCLUCRGCRForImage
+
+*% Binary blob also knows ECONOPRINT=ON/OFF, but only seems to emit ECONOMODE=OFF?
+*JCLOpenUI *Economode/Toner Saving: PickOne
+*OrderDependency: 29 JCLSetup *Economode
+*%DefaultEconomode: Off
+*DefaultEconomode: FromPrintoutMode
+*Economode FromPrintoutMode/Controlled by 'Printout Mode': "%% FoomaticRIPOptionSetting: Economode=@PrintoutMode"
+*Economode Off/Off: "@PJL SET ECONOMODE=OFF<0A>"
+*Economode On/On: "@PJL SET ECONOMODE=ON<0A>"
+*JCLCloseUI: *Economode
+
+*JCLOpenUI *JCLImproveOutput/Improve Print Output: PickOne
+*OrderDependency: 30 JCLSetup *JCLImproveOutput
+*DefaultJCLImproveOutput: OFF
+*JCLImproveOutput OFF/Off: ""
+*JCLImproveOutput LessPaperCurl/Reduce Paper Curl: "@PJL SET LESSPAPERCURL=ON<0A>"
+*JCLImproveOutput FixIntensity/Improve Toner Fixing: "@PJL SET FIXINTENSITYUP=ON<0A>"
+*JCLCloseUI: *JCLImproveOutput
+
+*CloseGroup: Adjustment
+
+*% TODO: Are all the additional fonts really necessary? We use gs anyway.
+
+*DefaultFont: Courier
+*Font AvantGarde-Book: Standard "(001.006S)" Standard ROM
+*Font AvantGarde-BookOblique: Standard "(001.006S)" Standard ROM
+*Font AvantGarde-Demi: Standard "(001.007S)" Standard ROM
+*Font AvantGarde-DemiOblique: Standard "(001.007S)" Standard ROM
+*Font Bookman-Demi: Standard "(001.004S)" Standard ROM
+*Font Bookman-DemiItalic: Standard "(001.004S)" Standard ROM
+*Font Bookman-Light: Standard "(001.004S)" Standard ROM
+*Font Bookman-LightItalic: Standard "(001.004S)" Standard ROM
+*Font Courier: Standard "(002.004S)" Standard ROM
+*Font Courier-Bold: Standard "(002.004S)" Standard ROM
+*Font Courier-BoldOblique: Standard "(002.004S)" Standard ROM
+*Font Courier-Oblique: Standard "(002.004S)" Standard ROM
+*Font Helvetica: Standard "(001.006S)" Standard ROM
+*Font Helvetica-Bold: Standard "(001.007S)" Standard ROM
+*Font Helvetica-BoldOblique: Standard "(001.007S)" Standard ROM
+*Font Helvetica-Narrow: Standard "(001.006S)" Standard ROM
+*Font Helvetica-Narrow-Bold: Standard "(001.007S)" Standard ROM
+*Font Helvetica-Narrow-BoldOblique: Standard "(001.007S)" Standard ROM
+*Font Helvetica-Narrow-Oblique: Standard "(001.006S)" Standard ROM
+*Font Helvetica-Oblique: Standard "(001.006S)" Standard ROM
+*Font NewCenturySchlbk-Bold: Standard "(001.009S)" Standard ROM
+*Font NewCenturySchlbk-BoldItalic: Standard "(001.007S)" Standard ROM
+*Font NewCenturySchlbk-Italic: Standard "(001.006S)" Standard ROM
+*Font NewCenturySchlbk-Roman: Standard "(001.007S)" Standard ROM
+*Font Palatino-Bold: Standard "(001.005S)" Standard ROM
+*Font Palatino-BoldItalic: Standard "(001.005S)" Standard ROM
+*Font Palatino-Italic: Standard "(001.005S)" Standard ROM
+*Font Palatino-Roman: Standard "(001.005S)" Standard ROM
+*Font Times-Bold: Standard "(001.007S)" Standard ROM
+*Font Times-BoldItalic: Standard "(001.009S)" Standard ROM
+*Font Times-Italic: Standard "(001.007S)" Standard ROM
+*Font Times-Roman: Standard "(001.007S)" Standard ROM
+*Font ZapfChancery-MediumItalic: Standard "(001.007S)" Standard ROM
+*Font ZapfDingbats: Special "(001.004S)" Special ROM
+*Font Symbol: Special "(001.007S)" Special ROM
+*Font Alaska: Standard "(001.005)" Standard ROM
+*Font AlaskaExtrabold: Standard "(001.005)" Standard ROM
+*Font AntiqueOakland: Standard "(001.005)" Standard ROM
+*Font AntiqueOakland-Bold: Standard "(001.005)" Standard ROM
+*Font AntiqueOakland-Oblique: Standard "(001.005)" Standard ROM
+*Font ClevelandCondensed: Standard "(001.005)" Standard ROM
+*Font Connecticut: Standard "(001.005)" Standard ROM
+*Font Guatemala-Antique: Standard "(001.005)" Standard ROM
+*Font Guatemala-Bold: Standard "(001.005)" Standard ROM
+*Font Guatemala-Italic: Standard "(001.005)" Standard ROM
+*Font Guatemala-BoldItalic: Standard "(001.005)" Standard ROM
+*Font LetterGothic: Standard "(001.005)" Standard ROM
+*Font LetterGothic-Bold: Standard "(001.005)" Standard ROM
+*Font LetterGothic-Oblique: Standard "(001.005)" Standard ROM
+*Font Maryland: Standard "(001.005)" Standard ROM
+*Font Oklahoma: Standard "(001.005)" Standard ROM
+*Font Oklahoma-Bold: Standard "(001.005)" Standard ROM
+*Font Oklahoma-Oblique: Standard "(001.005)" Standard ROM
+*Font Oklahoma-BoldOblique: Standard "(001.005)" Standard ROM
+*Font Utah: Standard "(001.005)" Standard ROM
+*Font Utah-Bold: Standard "(001.005)" Standard ROM
+*Font Utah-Oblique: Standard "(001.005)" Standard ROM
+*Font Utah-BoldOblique: Standard "(001.005)" Standard ROM
+*Font UtahCondensed: Standard "(001.005)" Standard ROM
+*Font UtahCondensed-Bold: Standard "(001.005)" Standard ROM
+*Font UtahCondensed-Oblique: Standard "(001.004)" Standard ROM
+*Font UtahCondensed-BoldOblique: Standard "(001.005)" Standard ROM
+*Font BermudaScript: Standard "(001.005)" Standard ROM
+*Font Germany: Standard "(001.005)" Standard ROM
+*Font SanDiego: Standard "(001.005)" Standard ROM
+*Font US-Roman: Standard "(001.005)" Standard ROM
+*% End

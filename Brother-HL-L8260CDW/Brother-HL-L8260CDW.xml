@@ -1,0 +1,57 @@
+<printer id="printer/Brother-HL-L8260CDW">
+  <make>Brother</make>
+  <model>HL-L8260CDW</model>
+  <mechanism>
+    <laser />
+    <color />
+    <resolution>
+      <dpi>
+        <x>600</x>
+        <y>600</y>
+      </dpi>
+    </resolution>
+    <margins>
+      <general>
+        <unit>pt</unit>
+        <relative/>
+        <top>12</top>
+        <bottom>12</bottom>
+        <left>12</left>
+        <right>12</right>
+      </general>
+    </margins>
+  </mechanism>
+  <lang>
+    <postscript level="3" />
+    <pcl level="6" />
+    <pjl />
+    <text>
+      <charset>us-ascii</charset>
+    </text>
+  </lang>
+  <autodetect>
+    <general>
+      <ieee1284>MFG:Brother;MDL:HL-L8260CDW</ieee1284>
+      <manufacturer>Brother</manufacturer>
+      <model>HL-L8260CDW</model>
+    </general>
+    <!-- <snmp>
+      <description>Brother HL-L8260CDW</description>
+      </snmp> -->
+  </autodetect>
+  <functionality>B</functionality>
+  <driver>pxlcolor</driver>
+  <drivers>
+    <driver>
+      <id>Postscript</id>
+    </driver>
+    <driver>
+      <id>pxlcolor</id>
+    </driver>
+  </drivers>
+  <comments>
+    <en>
+      ppm: 31
+    </en>
+  </comments>
+</printer>
